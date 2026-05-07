@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureVision – Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b12; --panel: #0d1520; --border: #1a3a5c;
+    --accent: #00d4ff; --accent2: #0066ff; --danger: #ff3b5c;
+    --success: #00ffaa; --warn: #ffaa00; --text: #c8dff0; --muted: #4a6a88;
+    --mono: 'Share Tech Mono', monospace; --sans: 'Exo 2', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: var(--bg); font-family: var(--sans); color: var(--text); }
+
+  nav {
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    padding: 0 20px; height: 56px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand svg { width: 24px; height: 24px; stroke: var(--warn); fill: none; }
+  .nav-brand span { font-weight: 700; font-size: 1rem; letter-spacing: 2px; text-transform: uppercase; }
+  .nav-brand b { color: var(--warn); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .nav-link { padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-family: var(--mono); text-decoration: none; color: var(--muted); border: 1px solid transparent; transition: all 0.2s; }
+  .nav-link:hover { color: var(--accent); border-color: var(--border); }
+  .nav-link.back { color: var(--accent); }
+  .nav-link.logout { color: var(--danger); }
+  .badge-admin { padding: 4px 10px; border-radius: 20px; font-family: var(--mono); font-size: 0.68rem; background: rgba(255,170,0,0.15); border: 1px solid rgba(255,170,0,0.3); color: var(--warn); }
+
+  .page { padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: 2px; }
+  .page-header h2 span { color: var(--warn); }
+  .page-header p { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
+
+  /* STAT CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; position: relative; overflow: hidden; }
+  .stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+  .stat-card.total::after { background: var(--accent); }
+  .stat-card.active::after { background: var(--success); }
+  .stat-card.disabled::after { background: var(--danger); }
+  .stat-card.logins::after { background: var(--warn); }
+  .stat-label { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .stat-value { font-family: var(--mono); font-size: 2rem; font-weight: 700; margin-top: 8px; }
+  .stat-card.total .stat-value { color: var(--accent); }
+  .stat-card.active .stat-value { color: var(--success); }
+  .stat-card.disabled .stat-value { color: var(--danger); }
+  .stat-card.logins .stat-value { color: var(--warn); }
+
+  /* SECTION */
+  .section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 24px; overflow: hidden; }
+  .section-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .section-head h3 { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .section-head .count { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { padding: 10px 16px; text-align: left; font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+  .data-table td { padding: 11px 16px; border-bottom: 1px solid rgba(26,58,92,0.4); font-size: 0.83rem; vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; }
+  .pill.admin { background: rgba(255,170,0,0.15); border: 1px solid rgba(255,170,0,0.3); color: var(--warn); }
+  .pill.viewer { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); }
+  .pill.active { background: rgba(0,255,170,0.1); border: 1px solid rgba(0,255,170,0.3); color: var(--success); }
+  .pill.disabled { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3); color: var(--danger); }
+  .pill.success { background: rgba(0,255,170,0.1); border: 1px solid rgba(0,255,170,0.3); color: var(--success); }
+  .pill.failed { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3); color: var(--danger); }
+
+  .action-btns { display: flex; gap: 6px; }
+  .act-btn {
+    padding: 5px 12px; border-radius: 5px; font-family: var(--mono); font-size: 0.68rem;
+    text-decoration: none; border: 1px solid; transition: all 0.2s; cursor: pointer; letter-spacing: 1px;
+  }
+  .act-btn.toggle-on { border-color: rgba(255,59,92,0.4); color: var(--danger); background: transparent; }
+  .act-btn.toggle-on:hover { background: rgba(255,59,92,0.1); }
+  .act-btn.toggle-off { border-color: rgba(0,255,170,0.4); color: var(--success); background: transparent; }
+  .act-btn.toggle-off:hover { background: rgba(0,255,170,0.1); }
+  .act-btn.del { border-color: rgba(255,59,92,0.3); color: var(--danger); background: transparent; }
+  .act-btn.del:hover { background: rgba(255,59,92,0.15); }
+  .act-btn.protected { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  .muted-text { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+  .ip-text { font-family: var(--mono); font-size: 0.78rem; color: var(--text); }
+
+  .filter-bar { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+  .filter-btn { padding: 5px 14px; border-radius: 20px; font-family: var(--mono); font-size: 0.68rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+  .filter-btn.active, .filter-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.07); }
+
+  .log-scroll { max-height: 320px; overflow-y: auto; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .data-table td:nth-child(4), .data-table th:nth-child(4) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .page { padding: 16px 14px; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span>Secure<b>Vision</b> · Admin</span>
+  </div>
+  <div class="nav-right">
+    <a href="/dashboard" class="nav-link back">← Dashboard</a>
+    <span class="badge-admin">{{ user }}</span>
+    <a href="/logout" class="nav-link logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h2>Admin <span>Control Panel</span></h2>
+    <p>// USER MANAGEMENT · LOGIN MONITORING · SYSTEM SECURITY</p>
+  </div>
+
+  {% set total = users | length %}
+  {% set active_count = users | selectattr('is_active', 'equalto', 1) | list | length %}
+  {% set disabled_count = total - active_count %}
+  {% set log_count = logs | length %}
+
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value">{{ total }}</div>
+    </div>
+    <div class="stat-card active">
+      <div class="stat-label">Active</div>
+      <div class="stat-value">{{ active_count }}</div>
+    </div>
+    <div class="stat-card disabled">
+      <div class="stat-label">Disabled</div>
+      <div class="stat-value">{{ disabled_count }}</div>
+    </div>
+    <div class="stat-card logins">
+      <div class="stat-label">Login Events</div>
+      <div class="stat-value">{{ log_count }}</div>
+    </div>
+  </div>
+
+  <!-- USERS TABLE -->
+  <div class="section">
+    <div class="section-head">
+      <h3>Registered Users</h3>
+      <span class="count">{{ total }} accounts</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Registered</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="muted-text">{{ u.id }}</td>
+            <td>{{ u.username }}</td>
+            <td><span class="pill {{ u.role }}">{{ u.role }}</span></td>
+            <td class="muted-text">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+            <td>
+              {% if u.is_active %}
+                <span class="pill active">Active</span>
+              {% else %}
+                <span class="pill disabled">Disabled</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.username == 'admin' %}
+                <span class="act-btn protected">Protected</span>
+              {% else %}
+              <div class="action-btns">
+                <a href="/admin/toggle/{{ u.id }}" class="act-btn {% if u.is_active %}toggle-on{% else %}toggle-off{% endif %}">
+                  {% if u.is_active %}Disable{% else %}Enable{% endif %}
+                </a>
+                <a href="/admin/delete/{{ u.id }}" class="act-btn del" onclick="return confirm('Delete user {{ u.username }}?')">Delete</a>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LOGIN LOGS -->
+  <div class="section">
+    <div class="section-head">
+      <h3>Login Activity Log</h3>
+      <span class="count">Last {{ logs | length }} events</span>
+    </div>
+    <div class="log-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>IP Address</th>
+            <th>Timestamp</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td class="muted-text">{{ log.id }}</td>
+            <td>{{ log.username }}</td>
+            <td class="ip-text">{{ log.ip }}</td>
+            <td class="muted-text" style="font-size:0.75rem;">{{ log.timestamp[:19].replace('T',' ') if log.timestamp else '—' }}</td>
+            <td>
+              {% if log.status == 'success' %}
+                <span class="pill success">✓ Success</span>
+              {% else %}
+                <span class="pill failed">✗ Failed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not logs %}
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;font-family:var(--mono);font-size:0.75rem;">No login events recorded yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
