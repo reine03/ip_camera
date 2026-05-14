@@ -1,0 +1,5 @@
+flask
+flask-bcrypt
+flask-sqlalchemy
+python-dotenv
+opencv-python-headless
